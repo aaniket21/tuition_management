@@ -42,7 +42,16 @@ CREATE TABLE IF NOT EXISTS students (
 
 CREATE TABLE IF NOT EXISTS classes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    subject_name VARCHAR(100) NOT NULL,
+    class_name VARCHAR(100) NOT NULL,
+    subject VARCHAR(100) NOT NULL,
+    batch_name VARCHAR(100),
+    teacher_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    max_students INT DEFAULT 40,
+    start_date DATE,
+    status VARCHAR(50) DEFAULT 'ACTIVE',
+    monthly_fee DECIMAL(10, 2) DEFAULT 0.00,
+    admission_fee DECIMAL(10, 2) DEFAULT 0.00,
+    late_fee_penalty DECIMAL(10, 2) DEFAULT 0.00,
     schedule_details JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -106,6 +115,16 @@ CREATE TABLE IF NOT EXISTS notices (
     audience notice_audience NOT NULL,
     target_class_id UUID REFERENCES classes(id) ON DELETE CASCADE,
     attachment_url VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by UUID REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS events (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    event_date DATE NOT NULL,
+    notice_id UUID REFERENCES notices(id) ON DELETE SET NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by UUID REFERENCES users(id)
 );

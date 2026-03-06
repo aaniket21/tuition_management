@@ -22,6 +22,8 @@ app.use('/api/admin/attendance', require('./routes/adminAttendanceRoutes'));
 app.use('/api/admin/fees', require('./routes/adminFeeRoutes'));
 app.use('/api/admin/notices', require('./routes/adminNoticeRoutes'));
 app.use('/api/admin/reports', require('./routes/adminReportRoutes'));
+app.use('/api/admin/dashboard', require('./routes/adminDashboardRoutes'));
+app.use('/api/admin/events', require('./routes/adminEventRoutes'));
 
 app.use('/api/student', require('./routes/studentRoutes'));
 app.use('/api/parent', require('./routes/parentRoutes'));

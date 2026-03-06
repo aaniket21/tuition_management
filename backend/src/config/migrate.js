@@ -36,6 +36,20 @@ async function migrate() {
                 WHEN duplicate_object THEN null;
             END $$;
         `);
+
+        // Add 'events' table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS events (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                title VARCHAR(255) NOT NULL,
+                description TEXT,
+                event_date DATE NOT NULL,
+                notice_id UUID REFERENCES notices(id) ON DELETE SET NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_by UUID REFERENCES users(id)
+            );
+        `);
+
         console.log('Migration successful.');
     } catch (e) {
         console.error('Migration failed:', e);
