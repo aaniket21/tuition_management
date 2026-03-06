@@ -1,0 +1,25 @@
+[dotenv@17.3.1] injecting env (7) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+Error ensuring database exists: password authentication failed for user "postgres"
+You might need to create it manually or check your PostgreSQL credentials.
+Error running schema: error: password authentication failed for user "postgres"
+    at D:\antigravity_project\tution_management\backend\node_modules\pg-pool\index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async setupDatabase (D:\antigravity_project\tution_management\backend\src\config\init_db.js:46:9) {
+  length: 104,
+  severity: 'FATAL',
+  code: '28P01',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'auth.c',
+  line: '320',
+  routine: 'auth_failed'
+}

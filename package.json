@@ -1,0 +1,13 @@
+{
+  "name": "tuition-management",
+  "version": "1.0.0",
+  "description": "Root orchestrator for Tuition Management System",
+  "scripts": {
+    "install:all": "npm install concurrently && npm install --prefix backend && npm run install:frontend",
+    "install:frontend": "cd frontend && npm install",
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
