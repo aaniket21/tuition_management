@@ -11,19 +11,8 @@ const getDashboardMetrics = async (req, res) => {
         const activeClassesResult = await pool.query(`SELECT COUNT(*) as count FROM classes`);
         const totalClasses = parseInt(activeClassesResult.rows[0].count);
 
-        // 3. Attendance Rate (overall)
-        const attendanceResult = await pool.query(`
-            SELECT 
-                COUNT(*) as total_records,
-                SUM(CASE WHEN status = 'PRESENT' THEN 1 ELSE 0 END) as present_count
-            FROM attendances
-        `);
-        const totalAttn = parseInt(attendanceResult.rows[0].total_records);
-        const presentAttn = parseInt(attendanceResult.rows[0].present_count);
-        const attendanceRate = totalAttn > 0 ? ((presentAttn / totalAttn) * 100).toFixed(1) : 0;
-
         // 4. Fees Collected
-        const feesCollectedResult = await pool.query(`SELECT COALESCE(SUM(amount_paid), 0) as total FROM offline_payments`);
+        const feesCollectedResult = await pool.query(`SELECT COALESCE(SUM(amount_paid), 0) as total FROM payments`);
         const feesCollected = parseFloat(feesCollectedResult.rows[0].total);
 
         // 5. New Students This Month
@@ -37,22 +26,13 @@ const getDashboardMetrics = async (req, res) => {
 
         // 6. Pending Fees
         const pendingFeesResult = await pool.query(`
-            SELECT COALESCE(SUM(monthly_amount), 0) as total
-            FROM fee_plans
-            WHERE status = 'OVERDUE'
+            SELECT COALESCE(SUM(sf.amount - sf.discount - (
+                SELECT COALESCE(SUM(amount_paid), 0) FROM payments WHERE student_fee_id = sf.id
+            )), 0) as total
+            FROM student_fees sf
+            WHERE sf.status IN ('UNPAID', 'PARTIALLY_PAID', 'OVERDUE')
         `);
         const pendingFees = parseFloat(pendingFeesResult.rows[0].total);
-
-        // 7. Today's Attendance
-        const todayAttendanceResult = await pool.query(`
-            SELECT 
-                COUNT(*) as total_records,
-                SUM(CASE WHEN status = 'PRESENT' THEN 1 ELSE 0 END) as present_count
-            FROM attendances
-            WHERE date = CURRENT_DATE
-        `);
-        const todayTotalAttn = parseInt(todayAttendanceResult.rows[0].total_records);
-        const todayPresentAttn = parseInt(todayAttendanceResult.rows[0].present_count || 0);
 
         // 8. Inactive Students
         const inactiveStudentsResult = await pool.query(`
@@ -89,31 +69,15 @@ const getDashboardMetrics = async (req, res) => {
         `);
         const classDistribution = classDistributionResult.rows;
 
-        // C. Weekly attendance trend (Last 5 days)
-        const weeklyAttendanceResult = await pool.query(`
-            SELECT 
-                TO_CHAR(date, 'Dy') as day,
-                COUNT(*) as total,
-                SUM(CASE WHEN status = 'PRESENT' THEN 1 ELSE 0 END) as present
-            FROM attendances
-            WHERE date >= CURRENT_DATE - INTERVAL '6 days'
-            GROUP BY date, TO_CHAR(date, 'Dy')
-            ORDER BY date
-        `);
-        const weeklyAttendanceTrend = weeklyAttendanceResult.rows.map(row => ({
-            day: row.day,
-            rate: parseInt(row.total) > 0 ? Math.round((parseInt(row.present) / parseInt(row.total)) * 100) : 0
-        }));
-
         // D. Monthly fees collection
         const monthlyFeesResult = await pool.query(`
             SELECT 
-                TO_CHAR(payment_date, 'Mon') as month,
+                TO_CHAR(date, 'Mon') as month,
                 SUM(amount_paid) as collection
-            FROM offline_payments
-            WHERE payment_date >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months'
-            GROUP BY TO_CHAR(payment_date, 'Mon'), DATE_TRUNC('month', payment_date)
-            ORDER BY DATE_TRUNC('month', payment_date)
+            FROM payments
+            WHERE date >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months'
+            GROUP BY TO_CHAR(date, 'Mon'), DATE_TRUNC('month', date)
+            ORDER BY DATE_TRUNC('month', date)
         `);
         const monthlyFeesCollection = monthlyFeesResult.rows;
 
@@ -126,11 +90,11 @@ const getDashboardMetrics = async (req, res) => {
             ORDER BY u.created_at DESC LIMIT 3
         `);
         const recentPaymentsResult = await pool.query(`
-            SELECT p.amount_paid, s.first_name, s.last_name, p.payment_date as created_at, 'fee_paid' as type
-            FROM offline_payments p 
-            JOIN fee_plans f ON p.fee_plan_id = f.id
+            SELECT p.amount_paid, s.first_name, s.last_name, p.date as created_at, 'fee_paid' as type
+            FROM payments p 
+            JOIN student_fees f ON p.student_fee_id = f.id
             JOIN students s ON f.student_id = s.id
-            ORDER BY p.payment_date DESC LIMIT 3
+            ORDER BY p.date DESC LIMIT 3
         `);
         let recentActivity = [...recentStudentsResult.rows, ...recentPaymentsResult.rows]
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -161,34 +125,26 @@ const getDashboardMetrics = async (req, res) => {
             GROUP BY c.id, c.subject
             LIMIT 5
                         `);
-        // Mock attendance per class for UI purpose as complex join is heavy
-        const classOverview = classOverviewResult.rows.map(c => ({
-            ...c,
-            attendance: Math.floor(Math.random() * 20) + 80 // Mock 80-100%
-        }));
+        const classOverview = classOverviewResult.rows;
 
         // System Summary
         const systemSummary = {
             totalClasses,
-            totalNotices: parseInt((await pool.query('SELECT COUNT(*) as count FROM notices')).rows[0].count),
-            totalTeachers: parseInt((await pool.query("SELECT COUNT(*) as count FROM users WHERE role = 'TEACHER'")).rows[0].count)
+            totalNotices: parseInt((await pool.query('SELECT COUNT(*) as count FROM notices')).rows[0].count)
         };
 
         res.json({
             metrics: {
                 totalStudents,
                 totalClasses,
-                attendanceRate,
                 feesCollected,
                 newStudents,
                 pendingFees,
-                todayAttendance: { present: todayPresentAttn, total: todayTotalAttn },
                 inactiveStudents
             },
             charts: {
                 enrollmentTrend,
                 classDistribution,
-                weeklyAttendanceTrend,
                 monthlyFeesCollection
             },
             sections: {

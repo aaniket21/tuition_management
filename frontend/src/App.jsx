@@ -14,6 +14,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import StudentManagement from './pages/admin/StudentManagement';
 import ClassManagement from './pages/admin/ClassManagement';
 import ClassDetails from './pages/admin/ClassDetails';
+import FeeManagement from './pages/admin/FeeManagement';
 
 // Moduler Placeholders
 const GenericPlaceholder = ({ title }) => (
@@ -68,24 +69,20 @@ function App() {
 
             {/* Protected Admin Routes */}
             <Route path="/admin" element={<ProtectedRoute allowedRoles={['ADMIN']}><MainLayout><AdminDashboard /></MainLayout></ProtectedRoute>} />
-            <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['ADMIN']}><MainLayout><GenericPlaceholder title="User Management" /></MainLayout></ProtectedRoute>} />
             <Route path="/admin/students" element={<ProtectedRoute allowedRoles={['ADMIN']}><MainLayout><StudentManagement /></MainLayout></ProtectedRoute>} />
             <Route path="/admin/classes" element={<ProtectedRoute allowedRoles={['ADMIN']}><MainLayout><ClassManagement /></MainLayout></ProtectedRoute>} />
             <Route path="/admin/classes/:id" element={<ProtectedRoute allowedRoles={['ADMIN']}><MainLayout><ClassDetails /></MainLayout></ProtectedRoute>} />
-            <Route path="/admin/attendance" element={<ProtectedRoute allowedRoles={['ADMIN']}><MainLayout><GenericPlaceholder title="Attendance Logging" /></MainLayout></ProtectedRoute>} />
-            <Route path="/admin/fees" element={<ProtectedRoute allowedRoles={['ADMIN']}><MainLayout><GenericPlaceholder title="Fee Processing" /></MainLayout></ProtectedRoute>} />
+            <Route path="/admin/fees" element={<ProtectedRoute allowedRoles={['ADMIN']}><MainLayout><FeeManagement /></MainLayout></ProtectedRoute>} />
             <Route path="/admin/notices" element={<ProtectedRoute allowedRoles={['ADMIN']}><MainLayout><GenericPlaceholder title="Notice Dispatch" /></MainLayout></ProtectedRoute>} />
 
             {/* Protected Student Routes */}
             <Route path="/student" element={<ProtectedRoute allowedRoles={['STUDENT']}><MainLayout><StudentDashboard /></MainLayout></ProtectedRoute>} />
             <Route path="/student/timetable" element={<ProtectedRoute allowedRoles={['STUDENT']}><MainLayout><GenericPlaceholder title="My Timetable" /></MainLayout></ProtectedRoute>} />
-            <Route path="/student/attendance" element={<ProtectedRoute allowedRoles={['STUDENT']}><MainLayout><GenericPlaceholder title="My Attendance" /></MainLayout></ProtectedRoute>} />
             <Route path="/student/fees" element={<ProtectedRoute allowedRoles={['STUDENT']}><MainLayout><GenericPlaceholder title="Fee Status" /></MainLayout></ProtectedRoute>} />
             <Route path="/student/notices" element={<ProtectedRoute allowedRoles={['STUDENT']}><MainLayout><GenericPlaceholder title="Notices" /></MainLayout></ProtectedRoute>} />
 
             {/* Protected Parent Routes */}
             <Route path="/parent" element={<ProtectedRoute allowedRoles={['PARENT']}><MainLayout><ParentDashboard /></MainLayout></ProtectedRoute>} />
-            <Route path="/parent/attendance" element={<ProtectedRoute allowedRoles={['PARENT']}><MainLayout><GenericPlaceholder title="Child Attendance Status" /></MainLayout></ProtectedRoute>} />
             <Route path="/parent/fees" element={<ProtectedRoute allowedRoles={['PARENT']}><MainLayout><GenericPlaceholder title="Child Fee Status" /></MainLayout></ProtectedRoute>} />
             <Route path="/parent/notices" element={<ProtectedRoute allowedRoles={['PARENT']}><MainLayout><GenericPlaceholder title="Important Notices" /></MainLayout></ProtectedRoute>} />
 

@@ -74,6 +74,40 @@ const createStudent = async (req, res) => {
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
             [studentUserId, parentId, student_code, first_name, last_name, phone || null, dob || null, gender || null, address || null, email || null, admission_date || null, class_name || null]
         );
+        const newStudentId = studentRes.rows[0].id;
+
+        // 5. Link Enrollment and Auto-generate Fees
+        if (class_name) {
+            const classRes = await client.query('SELECT id FROM classes WHERE class_name = $1 LIMIT 1', [class_name]);
+            if (classRes.rows.length > 0) {
+                const class_id = classRes.rows[0].id;
+
+                await client.query('INSERT INTO enrollments (class_id, student_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [class_id, newStudentId]);
+
+                let fs_id = null;
+                let amt = 0;
+                const fsResult = await client.query(`SELECT id, monthly_fee FROM fee_structures WHERE class_id = $1 LIMIT 1`, [class_id]);
+                if (fsResult.rows.length > 0) {
+                    fs_id = fsResult.rows[0].id;
+                    amt = fsResult.rows[0].monthly_fee;
+                } else {
+                    const cData = await client.query('SELECT monthly_fee FROM classes WHERE id = $1', [class_id]);
+                    if (cData.rows.length > 0) {
+                        amt = cData.rows[0].monthly_fee || 0;
+                        const newFs = await client.query(`INSERT INTO fee_structures (class_id, monthly_fee) VALUES ($1, $2) RETURNING id`, [class_id, amt]);
+                        fs_id = newFs.rows[0].id;
+                    }
+                }
+
+                if (fs_id) {
+                    const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+                    const existingFee = await client.query(`SELECT id FROM student_fees WHERE student_id = $1 AND fee_structure_id = $2 AND month = $3`, [newStudentId, fs_id, currentMonth]);
+                    if (existingFee.rows.length === 0) {
+                        await client.query(`INSERT INTO student_fees (student_id, fee_structure_id, month, amount, status) VALUES ($1, $2, $3, $4, 'UNPAID')`, [newStudentId, fs_id, currentMonth, amt]);
+                    }
+                }
+            }
+        }
 
         await client.query('COMMIT');
 

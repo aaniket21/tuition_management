@@ -122,16 +122,14 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
-            {/* Top Section: Key Metrics Grid (8 Cards) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {/* Top Section: Key Metrics Grid (6 Cards) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 <StatCard title="Total Students" value={metrics.totalStudents} icon={Users} color="text-blue-600 dark:text-blue-400" bg="bg-blue-100 dark:bg-blue-900/30" />
                 <StatCard title="Active Classes" value={metrics.totalClasses} icon={BookOpen} color="text-indigo-600 dark:text-indigo-400" bg="bg-indigo-100 dark:bg-indigo-900/30" />
-                <StatCard title="Attendance Rate" value={`${metrics.attendanceRate}%`} icon={Activity} color="text-emerald-600 dark:text-emerald-400" bg="bg-emerald-100 dark:bg-emerald-900/30" />
                 <StatCard title="Fees Collected" value={`$${metrics.feesCollected}`} icon={DollarSign} color="text-emerald-600 dark:text-emerald-400" bg="bg-emerald-100 dark:bg-emerald-900/30" />
 
                 <StatCard title="New Students (Month)" value={metrics.newStudents} icon={UserPlus} color="text-purple-600 dark:text-purple-400" bg="bg-purple-100 dark:bg-purple-900/30" />
                 <StatCard title="Pending Fees" value={`$${metrics.pendingFees}`} icon={Clock} color="text-amber-600 dark:text-amber-400" bg="bg-amber-100 dark:bg-amber-900/30" />
-                <StatCard title="Today's Attendance" value={`${metrics.todayAttendance.present}/${metrics.todayAttendance.total}`} icon={CalendarCheck} color="text-sky-600 dark:text-sky-400" bg="bg-sky-100 dark:bg-sky-900/30" />
                 <StatCard title="Inactive Students" value={metrics.inactiveStudents} icon={UserX} color="text-red-500 dark:text-red-400" bg="bg-red-100 dark:bg-red-900/30" />
             </div>
 
@@ -190,23 +188,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* Lower Section: Secondary Charts & Lists */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                {/* Weekly Attendance Trend */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5 flex flex-col transition-colors duration-200">
-                    <h2 className="text-md font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2"><Activity className="w-4 h-4 text-purple-600 dark:text-purple-400" /> Weekly Attendance</h2>
-                    <div className="flex-1 min-h-[200px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={charts.weeklyAttendanceTrend} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={5} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} domain={[0, 100]} tickFormatter={(val) => `${val}%`} />
-                                <Tooltip formatter={(value) => [`${value}%`, 'Attendance Rate']} contentStyle={{ fontSize: '12px', borderRadius: '6px' }} />
-                                <Line type="monotone" dataKey="rate" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                 {/* Class Wise Distribution Pie Chart */}
                 <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5 flex flex-col transition-colors duration-200">
@@ -247,9 +229,6 @@ const AdminDashboard = () => {
                         </Link>
                         <Link to="/admin/classes" className="bg-white/10 hover:bg-white/20 border border-white/5 transition-colors w-full py-2.5 px-4 rounded-lg flex items-center text-sm font-medium">
                             <BookOpen className="w-4 h-4 mr-3 text-emerald-400" /> Create New Class
-                        </Link>
-                        <Link to="/admin/attendance" className="bg-white/10 hover:bg-white/20 border border-white/5 transition-colors w-full py-2.5 px-4 rounded-lg flex items-center text-sm font-medium">
-                            <CalendarCheck className="w-4 h-4 mr-3 text-purple-400" /> Mark Attendance
                         </Link>
                         <Link to="/admin/fees" className="bg-white/10 hover:bg-white/20 border border-white/5 transition-colors w-full py-2.5 px-4 rounded-lg flex items-center text-sm font-medium">
                             <DollarSign className="w-4 h-4 mr-3 text-amber-400" /> Add Fee Payment
@@ -308,7 +287,6 @@ const AdminDashboard = () => {
                                     <tr className="border-b border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 transition-colors duration-200">
                                         <th className="py-3 px-5 font-semibold">Class Name</th>
                                         <th className="py-3 px-5 font-semibold">Students</th>
-                                        <th className="py-3 px-5 font-semibold text-right">Attendance</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -316,14 +294,6 @@ const AdminDashboard = () => {
                                         <tr key={idx} className="border-b border-slate-50 dark:border-slate-700/50 hover:bg-slate-50/50 dark:hover:bg-slate-700/50 transition-colors duration-150">
                                             <td className="py-3 px-5 font-medium text-slate-800 dark:text-slate-200">{cls.class_name}</td>
                                             <td className="py-3 px-5 text-slate-600 dark:text-slate-400">{cls.students}</td>
-                                            <td className="py-3 px-5 text-right">
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${cls.attendance >= 90 ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                                    cls.attendance >= 80 ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                                                        'bg-red-50 text-red-700 border-red-100'
-                                                    }`}>
-                                                    {cls.attendance}%
-                                                </span>
-                                            </td>
                                         </tr>
                                     ))}
                                     {sections.classOverview.length === 0 && (

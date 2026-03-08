@@ -86,12 +86,20 @@ const ClassManagement = () => {
     };
 
     const handleSaveClass = async (payload, id) => {
-        if (id) {
-            await api.put(`/admin/classes/${id}`, payload);
-        } else {
-            await api.post('/admin/classes', payload);
+        try {
+            if (id) {
+                await api.put(`/admin/classes/${id}`, payload);
+                alert('Class updated successfully!');
+            } else {
+                await api.post('/admin/classes', payload);
+                alert('Class created successfully!');
+            }
+            fetchData();
+        } catch (error) {
+            console.error('Error saving class:', error);
+            // Alert user so they can see why it failed (e.g., duplicate name)
+            alert(error.response?.data?.message || 'Error saving class');
         }
-        fetchData();
     };
 
     const handleExportCSV = () => {
@@ -294,8 +302,8 @@ const ClassManagement = () => {
                                 <div className="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
                                     <div
                                         className={`h-full rounded-full transition-all duration-500 ${(parseInt(c.current_students) / c.max_students) >= 0.9
-                                                ? 'bg-red-500' // Near capacity
-                                                : 'bg-emerald-500'
+                                            ? 'bg-red-500' // Near capacity
+                                            : 'bg-emerald-500'
                                             }`}
                                         style={{ width: `${Math.min((parseInt(c.current_students) / c.max_students) * 100, 100)}%` }}
                                     ></div>

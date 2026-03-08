@@ -16,22 +16,6 @@ const getProfile = async (req, res) => {
     }
 };
 
-const getAttendance = async (req, res) => {
-    try {
-        const result = await pool.query(`
-            SELECT a.date, a.status, c.subject_name
-            FROM attendances a
-            JOIN classes c ON a.class_id = c.id
-            JOIN students s ON a.student_id = s.id
-            WHERE s.user_id = $1
-            ORDER BY a.date DESC
-        `, [req.userId]);
-        res.status(200).json(result.rows);
-    } catch (err) {
-        res.status(500).json({ message: 'Error fetching attendance' });
-    }
-};
-
 const getFees = async (req, res) => {
     try {
         const result = await pool.query(`
@@ -65,4 +49,4 @@ const getNotices = async (req, res) => {
     }
 };
 
-module.exports = { getProfile, getAttendance, getFees, getNotices };
+module.exports = { getProfile, getFees, getNotices };

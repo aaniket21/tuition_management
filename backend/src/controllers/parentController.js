@@ -23,25 +23,6 @@ const getChildrenProfile = async (req, res) => {
     }
 };
 
-const getChildAttendance = async (req, res) => {
-    try {
-        const childIds = await getChildIds(req.userId);
-        if (childIds.length === 0) return res.status(200).json([]);
-
-        const result = await pool.query(`
-            SELECT a.date, a.status, c.subject_name, s.first_name as student_name
-            FROM attendances a
-            JOIN classes c ON a.class_id = c.id
-            JOIN students s ON a.student_id = s.id
-            WHERE a.student_id = ANY($1)
-            ORDER BY a.date DESC
-        `, [childIds]);
-        res.status(200).json(result.rows);
-    } catch (err) {
-        res.status(500).json({ message: 'Error fetching attendance' });
-    }
-};
-
 const getChildFees = async (req, res) => {
     try {
         const childIds = await getChildIds(req.userId);
@@ -88,4 +69,4 @@ const getNotices = async (req, res) => {
     }
 };
 
-module.exports = { getChildrenProfile, getChildAttendance, getChildFees, getNotices };
+module.exports = { getChildrenProfile, getChildFees, getNotices };

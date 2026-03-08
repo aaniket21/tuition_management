@@ -11,10 +11,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     if (user?.role === 'ADMIN') {
         links = [
             { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-            { name: 'User Management', path: '/admin/users', icon: Users },
             { name: 'Student Management', path: '/admin/students', icon: UserCircle },
             { name: 'Classes & Batches', path: '/admin/classes', icon: BookOpen },
-            { name: 'Attendance', path: '/admin/attendance', icon: Calendar },
             { name: 'Fees', path: '/admin/fees', icon: DollarSign },
             { name: 'Notices', path: '/admin/notices', icon: Bell },
         ];
@@ -22,14 +20,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         links = [
             { name: 'Dashboard', path: '/student', icon: Home },
             { name: 'Timetable', path: '/student/timetable', icon: Calendar },
-            { name: 'Attendance', path: '/student/attendance', icon: BookOpen },
             { name: 'Fees', path: '/student/fees', icon: DollarSign },
             { name: 'Notices', path: '/student/notices', icon: Bell },
         ];
     } else if (user?.role === 'PARENT') {
         links = [
             { name: 'Dashboard', path: '/parent', icon: Home },
-            { name: 'Child Attendance', path: '/parent/attendance', icon: Calendar },
             { name: 'Child Fees', path: '/parent/fees', icon: DollarSign },
             { name: 'Notices', path: '/parent/notices', icon: Bell }
         ];

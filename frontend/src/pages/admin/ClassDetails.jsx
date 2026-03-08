@@ -165,10 +165,6 @@ const ClassDetails = () => {
 
                                 <div className="grid grid-cols-2 gap-4 pt-2">
                                     <div>
-                                        <div className="text-xs font-bold text-slate-500 uppercase tracking-tight">Attendance</div>
-                                        <div className="text-xl font-black text-slate-800 dark:text-slate-100">{analytics.attendanceRate || 0}%</div>
-                                    </div>
-                                    <div>
                                         <div className="text-xs font-bold text-slate-500 uppercase tracking-tight">Collected</div>
                                         <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">${analytics.totalFeesCollected || 0}</div>
                                     </div>
@@ -191,15 +187,14 @@ const ClassDetails = () => {
                 <div className="flex overflow-x-auto border-b border-slate-200 dark:border-slate-700 hide-scrollbar bg-slate-50 dark:bg-slate-800/50">
                     {[
                         { id: 'students', icon: Users, label: 'Enrolled Students', count: students.length },
-                        { id: 'attendance', icon: Calendar, label: 'Attendance Manager' },
                         { id: 'settings', icon: Settings, label: 'Class Configuration' }
                     ].map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 px-6 py-4 text-sm font-bold transition-colors whitespace-nowrap outline-none ${activeTab === tab.id
-                                    ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 bg-white dark:bg-slate-800'
-                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700/50 border-b-2 border-transparent'
+                                ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 bg-white dark:bg-slate-800'
+                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700/50 border-b-2 border-transparent'
                                 }`}
                         >
                             <tab.icon className="w-4 h-4" />
@@ -292,20 +287,6 @@ const ClassDetails = () => {
                                     </table>
                                 )}
                             </div>
-                        </div>
-                    )}
-
-                    {/* Attendance/Analytics Tab Placeholder */}
-                    {activeTab === 'attendance' && (
-                        <div className="p-8 text-center bg-slate-50/50 dark:bg-slate-900/20">
-                            <TrendingUp className="w-12 h-12 text-blue-300 dark:text-blue-800 mx-auto mb-4" />
-                            <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300 mb-2">Attendance Engine integration</h3>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm max-w-md mx-auto">
-                                The detailed attendance marking and tracking feature connects directly with the global Attendance module parameters.
-                            </p>
-                            <button onClick={() => navigate('/admin/attendance')} className="mt-6 px-6 py-2 border border-slate-300 dark:border-slate-600 text-sm font-semibold rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                                Open Global Attendance
-                            </button>
                         </div>
                     )}
 

@@ -18,7 +18,6 @@ connectDB();
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/admin/students', require('./routes/adminStudentRoutes'));
 app.use('/api/admin/classes', require('./routes/adminClassRoutes'));
-app.use('/api/admin/attendance', require('./routes/adminAttendanceRoutes'));
 app.use('/api/admin/fees', require('./routes/adminFeeRoutes'));
 app.use('/api/admin/notices', require('./routes/adminNoticeRoutes'));
 app.use('/api/admin/reports', require('./routes/adminReportRoutes'));

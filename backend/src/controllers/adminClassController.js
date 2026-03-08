@@ -7,7 +7,7 @@ const classController = {
             const { search, subject, status, teacher_id } = req.query;
             let query = `
                 SELECT c.*, 
-                       u.first_name || ' ' || u.last_name as teacher_name,
+                       u.username as teacher_name,
                        (SELECT COUNT(*) FROM enrollments e WHERE e.class_id = c.id) as current_students
                 FROM classes c
                 LEFT JOIN users u ON c.teacher_id = u.id
@@ -54,7 +54,7 @@ const classController = {
 
             // 1. Get Class Info
             const classQuery = `
-                SELECT c.*, u.username as teacher_name, u.first_name || ' ' || u.last_name as teacher_full_name
+                SELECT c.*, u.username as teacher_name, u.username as teacher_full_name
                 FROM classes c
                 LEFT JOIN users u ON c.teacher_id = u.id
                 WHERE c.id = $1
@@ -78,26 +78,13 @@ const classController = {
             const studentsResult = await pool.query(studentsQuery, [id]);
             const students = studentsResult.rows;
 
-            // 3. Analytics: Attendance Rate
-            const attendanceQuery = `
-                SELECT 
-                    COUNT(*) as total_records,
-                    SUM(CASE WHEN status = 'PRESENT' THEN 1 ELSE 0 END) as present_count
-                FROM attendances 
-                WHERE class_id = $1
-            `;
-            const attResult = await pool.query(attendanceQuery, [id]);
-            const totalRecords = parseInt(attResult.rows[0].total_records || 0);
-            const presentCount = parseInt(attResult.rows[0].present_count || 0);
-            const attendanceRate = totalRecords > 0 ? Math.round((presentCount / totalRecords) * 100) : 0;
-
             // 4. Analytics: Fees Collected
             const feesQuery = `
-                SELECT COALESCE(SUM(op.amount_paid), 0) as total_fees
-                FROM offline_payments op
-                JOIN fee_plans fp ON op.fee_plan_id = fp.id
-                JOIN enrollments e ON fp.student_id = e.student_id
-                WHERE e.class_id = $1
+                SELECT COALESCE(SUM(p.amount_paid), 0) as total_fees
+                FROM payments p
+                JOIN student_fees sf ON p.student_fee_id = sf.id
+                JOIN fee_structures fs ON sf.fee_structure_id = fs.id
+                WHERE fs.class_id = $1
             `;
             const feesResult = await pool.query(feesQuery, [id]);
             const totalFeesCollected = parseFloat(feesResult.rows[0].total_fees || 0);
@@ -106,7 +93,6 @@ const classController = {
                 ...classData,
                 students,
                 analytics: {
-                    attendanceRate,
                     totalFeesCollected,
                     totalStudents: students.length
                 }
@@ -207,6 +193,31 @@ const classController = {
             if (result.rows.length === 0) {
                 return res.status(400).json({ message: 'Student is already enrolled in this class.' });
             }
+
+            // Auto fee generation
+            let fs_id = null;
+            let amt = 0;
+            const fsResult = await pool.query(`SELECT id, monthly_fee FROM fee_structures WHERE class_id = $1 LIMIT 1`, [class_id]);
+            if (fsResult.rows.length > 0) {
+                fs_id = fsResult.rows[0].id;
+                amt = fsResult.rows[0].monthly_fee;
+            } else {
+                const classData = await pool.query('SELECT monthly_fee FROM classes WHERE id = $1', [class_id]);
+                if (classData.rows.length > 0) {
+                    amt = classData.rows[0].monthly_fee || 0;
+                    const newFs = await pool.query(`INSERT INTO fee_structures (class_id, monthly_fee) VALUES ($1, $2) RETURNING id`, [class_id, amt]);
+                    fs_id = newFs.rows[0].id;
+                }
+            }
+
+            if (fs_id) {
+                const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+                const existingFee = await pool.query(`SELECT id FROM student_fees WHERE student_id = $1 AND fee_structure_id = $2 AND month = $3`, [student_id, fs_id, currentMonth]);
+                if (existingFee.rows.length === 0) {
+                    await pool.query(`INSERT INTO student_fees (student_id, fee_structure_id, month, amount, status) VALUES ($1, $2, $3, $4, 'UNPAID')`, [student_id, fs_id, currentMonth, amt]);
+                }
+            }
+
             res.status(201).json({ message: 'Student enrolled successfully', enrollment: result.rows[0] });
         } catch (error) {
             console.error('Error enrolling student to class:', error);
@@ -235,6 +246,33 @@ const classController = {
                 VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING *
             `;
             const result = await pool.query(insertQuery, [id, student_id]);
+
+            if (result.rows.length > 0) {
+                // Auto fee generation
+                let fs_id = null;
+                let amt = 0;
+                const fsResult = await pool.query(`SELECT id, monthly_fee FROM fee_structures WHERE class_id = $1 LIMIT 1`, [id]);
+                if (fsResult.rows.length > 0) {
+                    fs_id = fsResult.rows[0].id;
+                    amt = fsResult.rows[0].monthly_fee;
+                } else {
+                    const classData = await pool.query('SELECT monthly_fee FROM classes WHERE id = $1', [id]);
+                    if (classData.rows.length > 0) {
+                        amt = classData.rows[0].monthly_fee || 0;
+                        const newFs = await pool.query(`INSERT INTO fee_structures (class_id, monthly_fee) VALUES ($1, $2) RETURNING id`, [id, amt]);
+                        fs_id = newFs.rows[0].id;
+                    }
+                }
+
+                if (fs_id) {
+                    const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+                    const existingFee = await pool.query(`SELECT id FROM student_fees WHERE student_id = $1 AND fee_structure_id = $2 AND month = $3`, [student_id, fs_id, currentMonth]);
+                    if (existingFee.rows.length === 0) {
+                        await pool.query(`INSERT INTO student_fees (student_id, fee_structure_id, month, amount, status) VALUES ($1, $2, $3, $4, 'UNPAID')`, [student_id, fs_id, currentMonth, amt]);
+                    }
+                }
+            }
+
             res.json({ message: 'Student added successfully', enrollment: result.rows[0] });
         } catch (error) {
             console.error('Error adding student to class:', error);
