@@ -1,0 +1,26 @@
+[
+  {
+    "constraint_name": "payments_id_not_null",
+    "constraint_type": "CHECK"
+  },
+  {
+    "constraint_name": "payments_amount_paid_not_null",
+    "constraint_type": "CHECK"
+  },
+  {
+    "constraint_name": "payments_payment_mode_not_null",
+    "constraint_type": "CHECK"
+  },
+  {
+    "constraint_name": "payments_pkey",
+    "constraint_type": "PRIMARY KEY"
+  },
+  {
+    "constraint_name": "payments_student_fee_id_fkey",
+    "constraint_type": "FOREIGN KEY"
+  },
+  {
+    "constraint_name": "payments_recorded_by_fkey",
+    "constraint_type": "FOREIGN KEY"
+  }
+]

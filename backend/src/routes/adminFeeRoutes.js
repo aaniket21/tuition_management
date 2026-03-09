@@ -10,7 +10,10 @@ const {
     getFeePaymentHistory,
     updateStudentFee,
     collectPayment,
-    getReports
+    getReports,
+    generateMonthlyFees,
+    updatePayment,
+    deletePayment
 } = require('../controllers/adminFeeController');
 
 router.use(verifyToken, isAdmin);
@@ -26,8 +29,11 @@ router.get('/students', getStudentFees);
 router.get('/students/:id/payments', getFeePaymentHistory);
 router.put('/students/:id', updateStudentFee);
 router.post('/collect', collectPayment);
+router.put('/payments/:id', updatePayment);
+router.delete('/payments/:id', deletePayment);
 
 // Reports
 router.get('/reports', getReports);
+router.post('/generate-monthly', generateMonthlyFees);
 
 module.exports = router;

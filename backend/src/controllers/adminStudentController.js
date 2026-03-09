@@ -6,7 +6,7 @@ const createStudent = async (req, res) => {
     const client = await pool.connect();
     try {
         const {
-            first_name, last_name, phone, dob, gender, address, email, admission_date, class_name, // Student details
+            first_name, last_name, phone, dob, gender, address, email, admission_date, class_name, discount, // Student details
             parent_first_name, parent_last_name, parent_phone, // Parent details
         } = req.body;
 
@@ -70,9 +70,9 @@ const createStudent = async (req, res) => {
 
         // 4. Create Student Record
         const studentRes = await client.query(
-            `INSERT INTO students (user_id, parent_id, student_code, first_name, last_name, phone, dob, gender, address, email, admission_date, class_name) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
-            [studentUserId, parentId, student_code, first_name, last_name, phone || null, dob || null, gender || null, address || null, email || null, admission_date || null, class_name || null]
+            `INSERT INTO students (user_id, parent_id, student_code, first_name, last_name, phone, dob, gender, address, email, admission_date, class_name, discount) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
+            [studentUserId, parentId, student_code, first_name, last_name, phone || null, dob || null, gender || null, address || null, email || null, admission_date || null, class_name || null, discount || 0]
         );
         const newStudentId = studentRes.rows[0].id;
 
@@ -100,10 +100,12 @@ const createStudent = async (req, res) => {
                 }
 
                 if (fs_id) {
-                    const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+                    const now = new Date();
+                    const currentMonth = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+                    const monthDate = new Date(now.getFullYear(), now.getMonth(), 1);
                     const existingFee = await client.query(`SELECT id FROM student_fees WHERE student_id = $1 AND fee_structure_id = $2 AND month = $3`, [newStudentId, fs_id, currentMonth]);
                     if (existingFee.rows.length === 0) {
-                        await client.query(`INSERT INTO student_fees (student_id, fee_structure_id, month, amount, status) VALUES ($1, $2, $3, $4, 'UNPAID')`, [newStudentId, fs_id, currentMonth, amt]);
+                        await client.query(`INSERT INTO student_fees (student_id, fee_structure_id, month, month_date, amount, discount, status) VALUES ($1, $2, $3, $4, $5, $6, 'UNPAID')`, [newStudentId, fs_id, currentMonth, monthDate, amt, discount || 0]);
                     }
                 }
             }
@@ -158,14 +160,14 @@ const updateStudent = async (req, res) => {
     const client = await pool.connect();
     try {
         const { id } = req.params;
-        const { first_name, last_name, phone, dob, gender, address, email, admission_date, class_name, parent_first_name, parent_last_name, parent_phone } = req.body;
+        const { first_name, last_name, phone, dob, gender, address, email, admission_date, class_name, discount, parent_first_name, parent_last_name, parent_phone } = req.body;
 
         await client.query('BEGIN');
 
         // Update Student
         const studentUpdateRes = await client.query(
-            `UPDATE students SET first_name = $1, last_name = $2, phone = $3, dob = $4, gender = $5, address = $6, email = $7, admission_date = $8, class_name = $9, updated_at = CURRENT_TIMESTAMP WHERE id = $10 RETURNING parent_id`,
-            [first_name, last_name, phone || null, dob || null, gender || null, address || null, email || null, admission_date || null, class_name || null, id]
+            `UPDATE students SET first_name = $1, last_name = $2, phone = $3, dob = $4, gender = $5, address = $6, email = $7, admission_date = $8, class_name = $9, discount = $10, updated_at = CURRENT_TIMESTAMP WHERE id = $11 RETURNING parent_id`,
+            [first_name, last_name, phone || null, dob || null, gender || null, address || null, email || null, admission_date || null, class_name || null, discount || 0, id]
         );
 
         if (studentUpdateRes.rowCount === 0) {

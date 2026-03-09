@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
-import { CreditCard, Plus, IndianRupee, Banknote, Printer, Search, TrendingUp, AlertCircle, User, Edit, X, Download, FileSpreadsheet, FileText } from 'lucide-react';
+import { CreditCard, Plus, IndianRupee, Banknote, Printer, Search, TrendingUp, AlertCircle, User, Edit, X, Download, FileSpreadsheet, FileText, Trash2, Save } from 'lucide-react';
 import ReceiptModal from '../../components/admin/ReceiptModal';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const TABS = [
     { id: 'collection', label: 'Collection Point', icon: <CreditCard className="w-4 h-4 mr-2" /> },
@@ -19,14 +21,23 @@ const FeeManagement = () => {
     const [studentFees, setStudentFees] = useState([]);
     const [classes, setClasses] = useState([]);
     const [reports, setReports] = useState(null);
+    const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // Modal states
+    // Filters & Search
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('ALL');
+    const [classFilter, setClassFilter] = useState('ALL');
+    const [monthFilter, setMonthFilter] = useState('ALL');
+
     const [isStructureModalOpen, setIsStructureModalOpen] = useState(false);
     const [isEditStructureModalOpen, setIsEditStructureModalOpen] = useState(false);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [isAdvancePaymentModalOpen, setIsAdvancePaymentModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    const [editingPaymentId, setEditingPaymentId] = useState(null);
+    const [editPaymentForm, setEditPaymentForm] = useState({});
 
     const [receiptData, setReceiptData] = useState(null);
     const [selectedFee, setSelectedFee] = useState(null);
@@ -36,16 +47,18 @@ const FeeManagement = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [structRes, feeRes, classRes, repRes] = await Promise.all([
+            const [structRes, feeRes, classRes, repRes, studentRes] = await Promise.all([
                 api.get('/admin/fees/structures'),
                 api.get('/admin/fees/students'),
                 api.get('/admin/classes'),
-                api.get('/admin/fees/reports')
+                api.get('/admin/fees/reports'),
+                api.get('/admin/students')
             ]);
             setStructures(structRes.data);
             setStudentFees(feeRes.data);
             setClasses(classRes.data);
             setReports(repRes.data);
+            setStudents(studentRes.data);
         } catch (error) {
             console.error(error);
         } finally {
@@ -92,18 +105,24 @@ const FeeManagement = () => {
         const payment_mode = formData.get('payment_mode');
 
         try {
-            await api.post('/admin/fees/collect', {
+            const res = await api.post('/admin/fees/collect', {
                 student_fee_id: selectedFee.id,
+                student_id: selectedFee.student_id, // Pass student_id for advanced multi-month processing
                 amount_paid,
                 payment_mode
             });
             alert('Payment recorded successfully!');
             setIsPaymentModalOpen(false);
+            if (res.data.receipt_id) {
+                // Could open receipt automatically, but for now just refresh
+            }
             fetchData();
         } catch (error) {
             alert(error.response?.data?.message || 'Error recording payment');
         }
     };
+
+
 
     const handleViewProfile = async (fee) => {
         try {
@@ -117,6 +136,62 @@ const FeeManagement = () => {
         }
     };
 
+    const handleAdvancePayment = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        try {
+            const res = await api.post('/admin/fees/collect', {
+                student_id: formData.get('student_id'),
+                amount_paid: formData.get('amount_paid'),
+                payment_mode: formData.get('payment_mode')
+            });
+            alert('Advance Payment recorded successfully!');
+            setIsAdvancePaymentModalOpen(false);
+            if (res.data.receipt_id) {
+                // optional receipt popup
+            }
+            fetchData();
+        } catch (error) {
+            alert(error.response?.data?.message || 'Error recording advance payment');
+        }
+    };
+
+    const handleUpdatePaymentSubmit = async (paymentId) => {
+        try {
+            await api.put(`/admin/fees/payments/${paymentId}`, {
+                amount_paid: editPaymentForm.amount_paid,
+                payment_mode: editPaymentForm.payment_mode,
+                date: editPaymentForm.date
+            });
+            alert('Payment updated successfully');
+            setEditingPaymentId(null);
+
+            // Refetch this single profile's payments to update UI immediately
+            const historyRes = await api.get(`/admin/fees/students/${selectedFee.id}/payments`);
+            setPaymentHistory(historyRes.data);
+
+            fetchData();
+        } catch (error) {
+            alert(error.response?.data?.message || 'Error updating payment');
+        }
+    };
+
+    const handleDeletePayment = async (paymentId) => {
+        if (!window.confirm("Are you sure you want to delete this payment record? The student's fee ledger will be recalculated immediately.")) return;
+        try {
+            await api.delete(`/admin/fees/payments/${paymentId}`);
+            alert('Payment deleted successfully!');
+
+            // Refresh payment history explicitly
+            const historyRes = await api.get(`/admin/fees/students/${selectedFee.id}/payments`);
+            setPaymentHistory(historyRes.data);
+
+            fetchData();
+        } catch (error) {
+            alert(error.response?.data?.message || 'Error deleting payment');
+        }
+    };
+
     const handleUpdateFee = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -126,7 +201,6 @@ const FeeManagement = () => {
                 discount: formData.get('discount')
             });
             alert('Fee profile updated successfully!');
-            setIsEditModalOpen(false);
             fetchData();
         } catch (error) {
             alert(error.response?.data?.message || 'Error updating fee');
@@ -134,6 +208,18 @@ const FeeManagement = () => {
     };
 
     // Derived Data
+    const uniqueMonths = [...new Set(studentFees.map(f => f.month))].filter(Boolean);
+    const uniqueClasses = [...new Set(studentFees.map(f => f.class_name))].filter(Boolean);
+
+    const filteredFees = studentFees.filter(fee => {
+        const str = `${fee.first_name} ${fee.last_name} ${fee.student_code}`.toLowerCase();
+        const matchesSearch = str.includes(searchTerm.toLowerCase());
+        const matchesStatus = statusFilter === 'ALL' || fee.status === statusFilter;
+        const matchesClass = classFilter === 'ALL' || fee.class_name === classFilter;
+        const matchesMonth = monthFilter === 'ALL' || fee.month === monthFilter;
+        return matchesSearch && matchesStatus && matchesClass && matchesMonth;
+    });
+
     const pendingFees = studentFees.filter(f => f.status === 'UNPAID' || f.status === 'PARTIALLY_PAID' || f.status === 'OVERDUE');
 
     const getReportExportData = () => {
@@ -149,17 +235,32 @@ const FeeManagement = () => {
         }));
     };
 
-    const handleExportCSV = () => {
+    const handleExportPDF = () => {
         const data = getReportExportData();
         if (data.length === 0) return alert('No data to export.');
-        const headers = Object.keys(data[0]).join(',');
-        const rows = data.map(obj => Object.values(obj).map(val => `"${val}"`).join(','));
-        const csvContent = [headers, ...rows].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `Fee_Report_${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
+
+        const doc = new jsPDF();
+
+        doc.setFontSize(18);
+        doc.text("Tuition Center Fee Report", 14, 22);
+
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+
+        const tableColumn = Object.keys(data[0]);
+        const tableRows = data.map(obj => Object.values(obj));
+
+        autoTable(doc, {
+            startY: 35,
+            head: [tableColumn],
+            body: tableRows,
+            theme: 'grid',
+            styles: { fontSize: 8, cellPadding: 2 },
+            headStyles: { fillColor: [15, 118, 110], textColor: [255, 255, 255] } // Teal-700
+        });
+
+        doc.save(`Fee_Report_${new Date().toISOString().split('T')[0]}.pdf`);
     };
 
     const handleExportExcel = () => {
@@ -198,11 +299,32 @@ const FeeManagement = () => {
             {/* TAB CONTENT: Collection Point */}
             {activeTab === 'collection' && (
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-                        <h2 className="text-lg font-semibold text-slate-800">Student Fee Profiles</h2>
-                        <div className="relative">
-                            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input type="text" placeholder="Search student..." className="pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-64" />
+                    <div className="p-4 border-b border-slate-200 flex flex-col xl:flex-row justify-between items-start xl:items-center bg-slate-50 gap-4">
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-lg font-semibold text-slate-800">Student Fee Profiles</h2>
+                            <button onClick={() => setIsAdvancePaymentModalOpen(true)} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded shadow-sm transition-colors flex items-center">
+                                <Banknote className="w-3 h-3 mr-1" /> Advance Payment
+                            </button>
+                        </div>
+                        <div className="flex flex-wrap gap-3 w-full xl:w-auto">
+                            <div className="relative flex-1 md:flex-none md:w-64">
+                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input type="text" placeholder="Search student..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                            </div>
+                            <select value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)} className="flex-1 md:flex-none px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                                <option value="ALL">All Months</option>
+                                {uniqueMonths.map(m => <option key={m} value={m}>{m}</option>)}
+                            </select>
+                            <select value={classFilter} onChange={(e) => setClassFilter(e.target.value)} className="flex-1 md:flex-none px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                                <option value="ALL">All Classes</option>
+                                {uniqueClasses.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="flex-1 md:flex-none px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                                <option value="ALL">All Status</option>
+                                <option value="PAID">Paid</option>
+                                <option value="PARTIALLY_PAID">Partially Paid</option>
+                                <option value="UNPAID">Unpaid</option>
+                            </select>
                         </div>
                     </div>
                     <div className="overflow-x-auto">
@@ -218,50 +340,55 @@ const FeeManagement = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {studentFees.map(fee => (
-                                    <tr key={fee.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                                        <td className="p-4">
-                                            <div className="font-semibold text-slate-800">{fee.first_name} {fee.last_name}</div>
-                                            <div className="text-xs text-slate-500">{fee.student_code}</div>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="text-sm font-medium">{fee.class_name}</div>
-                                            <div className="text-xs text-slate-500">{fee.month}</div>
-                                        </td>
-                                        <td className="p-4 text-sm font-semibold">₹{(fee.amount - fee.discount).toFixed(2)}</td>
-                                        <td className="p-4 text-sm text-emerald-600 font-medium">₹{parseFloat(fee.total_paid).toFixed(2)}</td>
-                                        <td className="p-4">
-                                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${fee.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' :
-                                                fee.status === 'PARTIALLY_PAID' ? 'bg-amber-100 text-amber-700' :
-                                                    'bg-red-100 text-red-700'
-                                                }`}>
-                                                {fee.status.replace('_', ' ')}
-                                            </span>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="flex space-x-2">
-                                                <button onClick={() => handleViewProfile(fee)} className="p-1.5 text-slate-400 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 rounded transition-colors" title="View Profile">
-                                                    <User className="w-4 h-4" />
-                                                </button>
-                                                {fee.status !== 'PAID' && (
-                                                    <button onClick={() => { setSelectedFee(fee); setIsEditModalOpen(true); }} className="p-1.5 text-slate-400 hover:text-amber-600 bg-slate-100 hover:bg-amber-50 rounded transition-colors" title="Edit Profile">
+                                {filteredFees.map(fee => {
+                                    const billed = fee.amount - (fee.discount || 0);
+                                    const paid = parseFloat(fee.total_paid || 0);
+                                    const balance = billed - paid;
+                                    return (
+                                        <tr key={fee.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                            <td className="p-4">
+                                                <div className="font-semibold text-slate-800">{fee.first_name} {fee.last_name}</div>
+                                                <div className="text-xs text-slate-500">{fee.student_code}</div>
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="text-sm font-medium">{fee.class_name || 'Unassigned'}</div>
+                                                <div className="text-xs text-slate-500">{fee.month}</div>
+                                            </td>
+                                            <td className="p-4 text-sm font-semibold">₹{billed.toFixed(2)}</td>
+                                            <td className="p-4">
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm text-emerald-600 font-medium">₹{paid.toFixed(2)}</span>
+                                                    {balance > 0 && <span className="text-[10px] text-red-500 font-bold uppercase tracking-wider mt-0.5">Due: ₹{balance.toFixed(2)}</span>}
+                                                </div>
+                                            </td>
+                                            <td className="p-4">
+                                                <span className={`px-2 py-1 text-[10px] uppercase font-bold tracking-wider rounded-full ${fee.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' :
+                                                    fee.status === 'PARTIALLY_PAID' ? 'bg-amber-100 text-amber-700' :
+                                                        'bg-red-100 text-red-700'
+                                                    }`}>
+                                                    {fee.status.replace('_', ' ')}
+                                                </span>
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="flex space-x-2">
+                                                    <button onClick={() => handleViewProfile(fee)} className="p-1.5 text-slate-400 hover:text-amber-600 bg-slate-100 hover:bg-amber-50 rounded transition-colors" title="Edit Financial Profile">
                                                         <Edit className="w-4 h-4" />
                                                     </button>
-                                                )}
-                                                {fee.status !== 'PAID' && (
-                                                    <button onClick={() => { setSelectedFee(fee); setIsPaymentModalOpen(true); }} className="px-3 py-1.5 bg-blue-600 text-white rounded font-medium text-xs hover:bg-blue-700 transition-colors flex items-center shadow-sm">
-                                                        <Banknote className="w-3 h-3 mr-1" /> Collect
+                                                    {fee.status !== 'PAID' && (
+                                                        <button onClick={() => { setSelectedFee(fee); setIsPaymentModalOpen(true); }} className="px-3 py-1.5 bg-blue-600 text-white rounded font-medium text-xs hover:bg-blue-700 transition-colors flex items-center shadow-sm">
+                                                            <Banknote className="w-3 h-3 mr-1" /> Collect
+                                                        </button>
+                                                    )}
+                                                    <button onClick={() => setReceiptData(fee)} className="p-1.5 text-slate-400 hover:text-blue-600 bg-slate-100 hover:bg-blue-50 rounded transition-colors" title="Print latest statement">
+                                                        <Printer className="w-4 h-4" />
                                                     </button>
-                                                )}
-                                                <button onClick={() => setReceiptData(fee)} className="p-1.5 text-slate-400 hover:text-blue-600 bg-slate-100 hover:bg-blue-50 rounded transition-colors" title="Print latest statement">
-                                                    <Printer className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {studentFees.length === 0 && (
-                                    <tr><td colSpan="6" className="p-8 text-center text-slate-500 font-medium">No fee profiles generated yet.</td></tr>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                                {filteredFees.length === 0 && (
+                                    <tr><td colSpan="6" className="p-8 text-center text-slate-500 font-medium">No fee profiles matching your criteria.</td></tr>
                                 )}
                             </tbody>
                         </table>
@@ -352,8 +479,8 @@ const FeeManagement = () => {
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-bold text-slate-800">Financial Overview</h2>
                         <div className="flex gap-2">
-                            <button onClick={handleExportCSV} className="flex items-center px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition-colors shadow-sm">
-                                <FileText className="w-4 h-4 mr-2 text-slate-500" /> Export CSV
+                            <button onClick={handleExportPDF} className="flex items-center px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                                <FileText className="w-4 h-4 mr-2 text-red-500" /> Export PDF
                             </button>
                             <button onClick={handleExportExcel} className="flex items-center px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition-colors shadow-sm">
                                 <FileSpreadsheet className="w-4 h-4 mr-2 text-emerald-500" /> Export Excel
@@ -568,30 +695,6 @@ const FeeManagement = () => {
                 </div>
             )}
 
-            {isEditModalOpen && selectedFee && (
-                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                            <h2 className="text-xl font-bold text-slate-800">Edit Fee Profile</h2>
-                            <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
-                        </div>
-                        <form onSubmit={handleUpdateFee} className="p-6">
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Base Amount (₹)</label>
-                                <input type="number" step="0.01" name="amount" required defaultValue={selectedFee.amount} className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:border-blue-500" />
-                            </div>
-                            <div className="mb-6">
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Discount override (₹)</label>
-                                <input type="number" step="0.01" name="discount" required defaultValue={selectedFee.discount} className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:border-blue-500" />
-                            </div>
-                            <button type="submit" className="w-full py-2.5 font-bold bg-slate-800 hover:bg-slate-900 text-white rounded-lg shadow-sm transition-colors">
-                                Save Changes
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
-
             {isProfileModalOpen && selectedFee && (
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl flex flex-col max-h-[90vh]">
@@ -623,6 +726,25 @@ const FeeManagement = () => {
                                 </div>
                             </div>
 
+                            <form onSubmit={handleUpdateFee} className="mb-8 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                                <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Modify Base Settings</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Base Amount (₹)</label>
+                                        <input type="number" step="0.01" name="amount" required defaultValue={selectedFee.amount} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:bg-white focus:border-blue-500 transition-colors" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Discount override (₹)</label>
+                                        <input type="number" step="0.01" name="discount" required defaultValue={selectedFee.discount} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:bg-white focus:border-blue-500 transition-colors" />
+                                    </div>
+                                </div>
+                                <div className="mt-4 flex justify-end">
+                                    <button type="submit" className="px-4 py-2.5 font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-lg shadow-sm transition-colors flex items-center">
+                                        <Edit className="w-4 h-4 mr-2" /> Save Settings
+                                    </button>
+                                </div>
+                            </form>
+
                             <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">Payment History Archive</h3>
                             {paymentHistory.length === 0 ? (
                                 <div className="text-center py-8 text-slate-500 bg-slate-50 rounded-lg border border-slate-100">No payments have been recorded for this fee block yet.</div>
@@ -638,15 +760,89 @@ const FeeManagement = () => {
                                     <tbody className="divide-y divide-slate-100">
                                         {paymentHistory.map(ph => (
                                             <tr key={ph.id}>
-                                                <td className="p-3 text-slate-800">{new Date(ph.date).toLocaleString()}</td>
-                                                <td className="p-3 text-slate-600"><span className="px-2 py-1 bg-slate-100 rounded text-xs font-semibold">{ph.payment_mode}</span></td>
-                                                <td className="p-3 text-right font-bold text-emerald-600">₹{parseFloat(ph.amount_paid).toFixed(2)}</td>
+                                                <td className="p-3 text-slate-800">
+                                                    {editingPaymentId === ph.id ? (
+                                                        <input type="datetime-local" value={editPaymentForm.date || ''} onChange={e => setEditPaymentForm({ ...editPaymentForm, date: e.target.value })} className="border rounded px-2 py-1 text-xs w-full" />
+                                                    ) : new Date(ph.date).toLocaleString()}
+                                                </td>
+                                                <td className="p-3 text-slate-600">
+                                                    {editingPaymentId === ph.id ? (
+                                                        <select value={editPaymentForm.payment_mode || ''} onChange={e => setEditPaymentForm({ ...editPaymentForm, payment_mode: e.target.value })} className="border rounded px-2 py-1 text-xs w-full">
+                                                            <option value="CASH">Cash</option>
+                                                            <option value="UPI">UPI</option>
+                                                            <option value="BANK_TRANSFER">Bank Transfer</option>
+                                                        </select>
+                                                    ) : <span className="px-2 py-1 bg-slate-100 rounded text-xs font-semibold">{ph.payment_mode}</span>}
+                                                </td>
+                                                <td className="p-3 text-right font-bold text-emerald-600">
+                                                    {editingPaymentId === ph.id ? (
+                                                        <div className="flex gap-2 justify-end items-center">
+                                                            <input type="number" step="0.01" value={editPaymentForm.amount_paid || ''} onChange={e => setEditPaymentForm({ ...editPaymentForm, amount_paid: e.target.value })} className="border rounded px-2 py-1 text-xs w-24 text-right" />
+                                                            <button onClick={() => handleUpdatePaymentSubmit(ph.id)} className="px-2 py-1 bg-blue-600 text-white rounded flex items-center gap-1 hover:bg-blue-700 text-xs font-semibold" title="Save changes">
+                                                                <Save className="w-3 h-3" /> Save
+                                                            </button>
+                                                            <button onClick={() => setEditingPaymentId(null)} className="px-2 py-1 bg-slate-200 text-slate-700 rounded flex items-center gap-1 hover:bg-slate-300 text-xs font-semibold" title="Cancel edit">
+                                                                <X className="w-3 h-3" /> Cancel
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex justify-end gap-2 items-center">
+                                                            ₹{parseFloat(ph.amount_paid).toFixed(2)}
+                                                            <button onClick={() => {
+                                                                setEditingPaymentId(ph.id);
+                                                                setEditPaymentForm({ amount_paid: ph.amount_paid, payment_mode: ph.payment_mode, date: new Date(ph.date).toISOString().slice(0, 16) });
+                                                            }} className="p-1 text-slate-400 hover:text-blue-600 ml-2" title="Edit Payment">
+                                                                <Edit className="w-4 h-4" />
+                                                            </button>
+                                                            <button onClick={() => handleDeletePayment(ph.id)} className="p-1 text-slate-400 hover:text-red-500" title="Delete Payment">
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             )}
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {isAdvancePaymentModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-emerald-50">
+                            <h2 className="text-xl font-bold text-emerald-900">Advance/Custom Payment</h2>
+                            <button onClick={() => setIsAdvancePaymentModalOpen(false)} className="text-emerald-400 hover:text-emerald-600"><X className="w-5 h-5" /></button>
+                        </div>
+                        <form onSubmit={handleAdvancePayment} className="p-6">
+                            <div className="space-y-4 mb-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Select Student</label>
+                                    <select name="student_id" required className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:border-emerald-500">
+                                        <option value="">-- select a student --</option>
+                                        {students.map(s => <option key={s.id} value={s.id}>{s.first_name} {s.last_name} ({s.student_code})</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Amount (₹)</label>
+                                    <input type="number" step="0.01" name="amount_paid" required className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 font-bold text-lg text-emerald-600" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Payment Mode</label>
+                                    <select name="payment_mode" className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:border-emerald-500">
+                                        <option value="CASH">Cash</option>
+                                        <option value="UPI">UPI</option>
+                                        <option value="BANK_TRANSFER">Bank Transfer</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" className="w-full py-3 font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm transition-colors text-lg flex justify-center items-center">
+                                <IndianRupee className="w-5 h-5 mr-1" /> Record Advanced Payment
+                            </button>
+                        </form>
                     </div>
                 </div>
             )}

@@ -36,4 +36,20 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+
+  // Set up automated Monthly Fee Generation
+  const cron = require('node-cron');
+  const { processMonthlyFees } = require('./controllers/adminFeeController');
+
+  // Run on the 1st of every month at 00:05 AM
+  cron.schedule('5 0 1 * *', async () => {
+    console.log('Running automated monthly fee generation...');
+    const result = await processMonthlyFees();
+    if (result.success) {
+      console.log(`Automated fee generation completed successfully. Generated ${result.count} records for ${result.month}.`);
+    } else {
+      console.error(`Automated fee generation failed:`, result.error);
+    }
+  });
+  console.log('Automated billing cron job initialized.');
 });

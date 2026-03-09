@@ -55,7 +55,8 @@ const StudentManagement = () => {
         parent_last_name: '',
         parent_phone: '',
         admission_date: '',
-        class_name: ''
+        class_name: '',
+        discount: 0
     });
 
     const fetchStudents = async () => {
@@ -80,7 +81,7 @@ const StudentManagement = () => {
         setFormData({
             first_name: '', last_name: '', phone: '',
             dob: '', gender: '', address: '', email: '',
-            admission_date: '', class_name: '',
+            admission_date: '', class_name: '', discount: 0,
             parent_first_name: '', parent_last_name: '', parent_phone: ''
         });
         setShowModal(true);
@@ -108,7 +109,8 @@ const StudentManagement = () => {
             class_name: student.class_name || '',
             parent_first_name: student.parent_first,
             parent_last_name: student.parent_last,
-            parent_phone: student.parent_phone || ''
+            parent_phone: student.parent_phone || '',
+            discount: student.discount || 0
         });
         setShowModal(true);
     };
@@ -950,6 +952,11 @@ const StudentManagement = () => {
                                                     <div className="flex flex-col md:flex-row items-baseline gap-4">
                                                         <label className="w-full md:w-32 text-sm font-bold text-gray-700 dark:text-slate-300">Admission :</label>
                                                         <input type="date" name="admission_date" value={formData.admission_date} onChange={handleChange} className="flex-1 w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-transparent dark:text-slate-100 focus:outline-none focus:border-[#0f766e] dark:focus:border-[#14b8a6] transition-colors" />
+                                                    </div>
+
+                                                    <div className="flex flex-col md:flex-row items-baseline gap-4">
+                                                        <label className="w-full md:w-32 text-sm font-bold text-gray-700 dark:text-slate-300">Discount (₹) :</label>
+                                                        <input type="number" name="discount" min="0" placeholder="0" value={formData.discount || 0} onChange={handleChange} className="flex-1 w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-transparent dark:text-slate-100 focus:outline-none focus:border-[#0f766e] dark:focus:border-[#14b8a6] transition-colors" />
                                                     </div>
 
                                                     <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row items-baseline gap-4">
