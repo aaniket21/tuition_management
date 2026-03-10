@@ -108,28 +108,48 @@ const AdminDashboard = () => {
                     <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium transition-colors">System Overview & Analytics</p>
                 </div>
                 {/* Alerts Widget */}
-                <div className="flex gap-3 mt-2 md:mt-0 overflow-x-auto pb-2 w-full md:w-auto max-w-full">
-                    {metrics.pendingFees > 0 && (
-                        <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/50 text-amber-700 dark:text-amber-400 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap shadow-sm transition-colors">
-                            <DollarSign className="w-4 h-4" /> Pending Fees: ${metrics.pendingFees}
-                        </div>
-                    )}
-                    {metrics.inactiveStudents >= 3 && (
-                        <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap shadow-sm transition-colors">
-                            <UserX className="w-4 h-4" /> {metrics.inactiveStudents} Inactive Students
-                        </div>
-                    )}
+                <div className="flex flex-col gap-3 mt-2 md:mt-0 w-full md:w-auto max-w-full">
+                    <div className="flex gap-3 overflow-x-auto pb-2">
+                        {metrics.pendingFees > 0 && (
+                            <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/50 text-amber-700 dark:text-amber-400 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap shadow-sm transition-colors">
+                                <DollarSign className="w-4 h-4" /> Pending Fees: ₹{metrics.pendingFees}
+                            </div>
+                        )}
+                        {metrics.inactiveStudents >= 3 && (
+                            <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap shadow-sm transition-colors">
+                                <UserX className="w-4 h-4" /> {metrics.inactiveStudents} Inactive Students
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
+
+            {/* Latest Notice Banner */}
+            {sections.systemSummary.latestNotice && (
+                <div className="animate-in fade-in slide-in-from-top-4 flex items-center justify-between gap-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-4 rounded-xl shadow-sm">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 text-blue-600">
+                            <Bell className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-0.5">Latest Broadcast</p>
+                            <p className="text-sm font-medium text-slate-800 truncate">{sections.systemSummary.latestNotice.title}</p>
+                        </div>
+                    </div>
+                    <Link to="/admin/notices" className="shrink-0 text-xs font-semibold text-blue-600 bg-white px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors">
+                        View Board
+                    </Link>
+                </div>
+            )}
 
             {/* Top Section: Key Metrics Grid (6 Cards) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 <StatCard title="Total Students" value={metrics.totalStudents} icon={Users} color="text-blue-600 dark:text-blue-400" bg="bg-blue-100 dark:bg-blue-900/30" />
                 <StatCard title="Active Classes" value={metrics.totalClasses} icon={BookOpen} color="text-indigo-600 dark:text-indigo-400" bg="bg-indigo-100 dark:bg-indigo-900/30" />
-                <StatCard title="Fees Collected" value={`$${metrics.feesCollected}`} icon={DollarSign} color="text-emerald-600 dark:text-emerald-400" bg="bg-emerald-100 dark:bg-emerald-900/30" />
+                <StatCard title="Fees Collected" value={`₹${metrics.feesCollected}`} icon={DollarSign} color="text-emerald-600 dark:text-emerald-400" bg="bg-emerald-100 dark:bg-emerald-900/30" />
 
                 <StatCard title="New Students (Month)" value={metrics.newStudents} icon={UserPlus} color="text-purple-600 dark:text-purple-400" bg="bg-purple-100 dark:bg-purple-900/30" />
-                <StatCard title="Pending Fees" value={`$${metrics.pendingFees}`} icon={Clock} color="text-amber-600 dark:text-amber-400" bg="bg-amber-100 dark:bg-amber-900/30" />
+                <StatCard title="Total Notices" value={sections.systemSummary.totalNotices} icon={Bell} color="text-sky-600 dark:text-sky-400" bg="bg-sky-100 dark:bg-sky-900/30" />
                 <StatCard title="Inactive Students" value={metrics.inactiveStudents} icon={UserX} color="text-red-500 dark:text-red-400" bg="bg-red-100 dark:bg-red-900/30" />
             </div>
 
@@ -174,9 +194,9 @@ const AdminDashboard = () => {
                             <BarChart data={charts.monthlyFeesCollection} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} tickFormatter={(val) => `$${val}`} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} tickFormatter={(val) => `₹${val}`} />
                                 <Tooltip
-                                    formatter={(value) => [`$${value}`, 'Collected']}
+                                    formatter={(value) => [`₹${value}`, 'Collected']}
                                     cursor={{ fill: '#f1f5f9' }}
                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                 />
@@ -378,14 +398,17 @@ const AdminDashboard = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {notices.length > 0 ? (
                                 notices.slice(0, 3).map((notice) => (
-                                    <div key={notice.id} className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-blue-300 dark:hover:border-blue-500 transition-colors bg-white dark:bg-slate-800 relative group overflow-hidden flex flex-col h-full">
+                                    <div key={notice.id} className={`border ${notice.is_pinned ? 'border-amber-200 dark:border-amber-700/50 bg-amber-50/30 dark:bg-amber-900/10' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'} rounded-xl p-4 hover:border-blue-300 dark:hover:border-blue-500 transition-colors relative group overflow-hidden flex flex-col h-full`}>
                                         {/* Decorative top border */}
                                         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-t-xl opacity-70 group-hover:opacity-100 transition-opacity"></div>
                                         <div className="flex flex-wrap gap-2 justify-between items-start mb-3 pt-1">
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${notice.audience === 'GLOBAL' ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800/50' : 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/50'} border uppercase tracking-wider shrink-0`}>
-                                                {notice.audience}
-                                            </span>
-                                            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium flex items-center gap-1 shrink-0">
+                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${notice.category === 'GENERAL' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-emerald-50 text-emerald-700 border-emerald-100'} border uppercase tracking-wider`}>
+                                                    {notice.category}
+                                                </span>
+                                                {notice.is_pinned && <span className="text-[10px] font-bold px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 rounded-full">PINNED</span>}
+                                            </div>
+                                            <span className="text-xs text-slate-400 font-medium flex items-center gap-1 shrink-0">
                                                 <Clock className="w-3 h-3" />
                                                 {formatTimeAgo(new Date(notice.created_at))}
                                             </span>

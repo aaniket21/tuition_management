@@ -121,9 +121,12 @@ CREATE TABLE IF NOT EXISTS notices (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
-    audience notice_audience NOT NULL,
-    target_class_id UUID REFERENCES classes(id) ON DELETE CASCADE,
+    category VARCHAR(50) DEFAULT 'GENERAL',
+    target_type VARCHAR(50) DEFAULT 'ALL_STUDENTS',
+    target_id UUID,
     attachment_url VARCHAR(255),
+    is_pinned BOOLEAN DEFAULT false,
+    expiry_date TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by UUID REFERENCES users(id)
 );

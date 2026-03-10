@@ -276,21 +276,21 @@ const FeeManagement = () => {
 
     return (
         <div className="p-8 max-w-7xl mx-auto animate-in fade-in duration-500">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-800">Fee Processing</h1>
-                    <p className="text-slate-500 mt-1">Manage structures, collect payments, and track receivables</p>
+                    <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">Fee Processing</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">Manage structures, collect payments, and track receivables</p>
                 </div>
-                <div className="flex bg-white rounded-lg p-1 shadow-sm border border-slate-200">
+                <div className="flex flex-wrap bg-white dark:bg-slate-800 rounded-lg p-1 shadow-sm border border-slate-200 dark:border-slate-700">
                     {TABS.map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === tab.id ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'
+                            className={`flex flex-1 md:flex-none justify-center items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === tab.id ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50'
                                 }`}
                         >
                             {tab.icon}
-                            {tab.label}
+                            <span className="hidden sm:inline">{tab.label}</span>
                         </button>
                     ))}
                 </div>
@@ -298,28 +298,28 @@ const FeeManagement = () => {
 
             {/* TAB CONTENT: Collection Point */}
             {activeTab === 'collection' && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="p-4 border-b border-slate-200 flex flex-col xl:flex-row justify-between items-start xl:items-center bg-slate-50 gap-4">
+                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex flex-col xl:flex-row justify-between items-start xl:items-center bg-slate-50 dark:bg-slate-900/50 gap-4">
                         <div className="flex items-center gap-3">
-                            <h2 className="text-lg font-semibold text-slate-800">Student Fee Profiles</h2>
-                            <button onClick={() => setIsAdvancePaymentModalOpen(true)} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded shadow-sm transition-colors flex items-center">
+                            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Student Fee Profiles</h2>
+                            <button onClick={() => setIsAdvancePaymentModalOpen(true)} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded shadow-sm transition-colors flex items-center whitespace-nowrap">
                                 <Banknote className="w-3 h-3 mr-1" /> Advance Payment
                             </button>
                         </div>
                         <div className="flex flex-wrap gap-3 w-full xl:w-auto">
                             <div className="relative flex-1 md:flex-none md:w-64">
-                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                <input type="text" placeholder="Search student..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                                <input type="text" placeholder="Search student..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500" />
                             </div>
-                            <select value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)} className="flex-1 md:flex-none px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                            <select value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)} className="flex-1 md:flex-none px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">
                                 <option value="ALL">All Months</option>
                                 {uniqueMonths.map(m => <option key={m} value={m}>{m}</option>)}
                             </select>
-                            <select value={classFilter} onChange={(e) => setClassFilter(e.target.value)} className="flex-1 md:flex-none px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                            <select value={classFilter} onChange={(e) => setClassFilter(e.target.value)} className="flex-1 md:flex-none px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">
                                 <option value="ALL">All Classes</option>
                                 {uniqueClasses.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
-                            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="flex-1 md:flex-none px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="flex-1 md:flex-none px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">
                                 <option value="ALL">All Status</option>
                                 <option value="PAID">Paid</option>
                                 <option value="PARTIALLY_PAID">Partially Paid</option>
@@ -328,15 +328,15 @@ const FeeManagement = () => {
                         </div>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
+                        <table className="w-full text-left border-collapse min-w-[800px]">
                             <thead>
-                                <tr className="bg-slate-50 border-b border-slate-200 text-sm text-slate-500">
+                                <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400">
                                     <th className="p-4 font-medium">Student Info</th>
                                     <th className="p-4 font-medium">Class / Month</th>
                                     <th className="p-4 font-medium">Total Bill</th>
                                     <th className="p-4 font-medium">Paid</th>
-                                    <th className="p-4 font-medium">Status</th>
-                                    <th className="p-4 font-medium">Actions</th>
+                                    <th className="p-4 font-medium flex justify-center">Status</th>
+                                    <th className="p-4 font-medium text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -345,33 +345,33 @@ const FeeManagement = () => {
                                     const paid = parseFloat(fee.total_paid || 0);
                                     const balance = billed - paid;
                                     return (
-                                        <tr key={fee.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                        <tr key={fee.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                             <td className="p-4">
-                                                <div className="font-semibold text-slate-800">{fee.first_name} {fee.last_name}</div>
-                                                <div className="text-xs text-slate-500">{fee.student_code}</div>
+                                                <div className="font-semibold text-slate-800 dark:text-slate-200">{fee.first_name} {fee.last_name}</div>
+                                                <div className="text-xs text-slate-500 dark:text-slate-400">{fee.student_code}</div>
                                             </td>
                                             <td className="p-4">
-                                                <div className="text-sm font-medium">{fee.class_name || 'Unassigned'}</div>
-                                                <div className="text-xs text-slate-500">{fee.month}</div>
+                                                <div className="text-sm font-medium text-slate-800 dark:text-slate-200">{fee.class_name || 'Unassigned'}</div>
+                                                <div className="text-xs text-slate-500 dark:text-slate-400">{fee.month}</div>
                                             </td>
-                                            <td className="p-4 text-sm font-semibold">₹{billed.toFixed(2)}</td>
+                                            <td className="p-4 text-sm font-semibold text-slate-800 dark:text-slate-200">₹{billed.toFixed(2)}</td>
                                             <td className="p-4">
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm text-emerald-600 font-medium">₹{paid.toFixed(2)}</span>
-                                                    {balance > 0 && <span className="text-[10px] text-red-500 font-bold uppercase tracking-wider mt-0.5">Due: ₹{balance.toFixed(2)}</span>}
+                                                    <span className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">₹{paid.toFixed(2)}</span>
+                                                    {balance > 0 && <span className="text-[10px] text-red-500 dark:text-red-400 font-bold uppercase tracking-wider mt-0.5">Due: ₹{balance.toFixed(2)}</span>}
                                                 </div>
                                             </td>
-                                            <td className="p-4">
-                                                <span className={`px-2 py-1 text-[10px] uppercase font-bold tracking-wider rounded-full ${fee.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' :
-                                                    fee.status === 'PARTIALLY_PAID' ? 'bg-amber-100 text-amber-700' :
-                                                        'bg-red-100 text-red-700'
+                                            <td className="p-4 text-center">
+                                                <span className={`px-2 py-1 text-[10px] uppercase font-bold tracking-wider rounded-full ${fee.status === 'PAID' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' :
+                                                    fee.status === 'PARTIALLY_PAID' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' :
+                                                        'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                                                     }`}>
                                                     {fee.status.replace('_', ' ')}
                                                 </span>
                                             </td>
-                                            <td className="p-4">
-                                                <div className="flex space-x-2">
-                                                    <button onClick={() => handleViewProfile(fee)} className="p-1.5 text-slate-400 hover:text-amber-600 bg-slate-100 hover:bg-amber-50 rounded transition-colors" title="Edit Financial Profile">
+                                            <td className="p-4 text-right">
+                                                <div className="flex justify-end space-x-2">
+                                                    <button onClick={() => handleViewProfile(fee)} className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 bg-slate-100 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded transition-colors" title="Edit Financial Profile">
                                                         <Edit className="w-4 h-4" />
                                                     </button>
                                                     {fee.status !== 'PAID' && (
@@ -379,7 +379,7 @@ const FeeManagement = () => {
                                                             <Banknote className="w-3 h-3 mr-1" /> Collect
                                                         </button>
                                                     )}
-                                                    <button onClick={() => setReceiptData(fee)} className="p-1.5 text-slate-400 hover:text-blue-600 bg-slate-100 hover:bg-blue-50 rounded transition-colors" title="Print latest statement">
+                                                    <button onClick={() => setReceiptData(fee)} className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors" title="Print latest statement">
                                                         <Printer className="w-4 h-4" />
                                                     </button>
                                                 </div>
@@ -429,15 +429,15 @@ const FeeManagement = () => {
 
             {/* TAB CONTENT: Pending Tracker */}
             {activeTab === 'pending' && (
-                <div className="bg-white rounded-xl shadow-sm border border-red-200 overflow-hidden">
-                    <div className="p-6 border-b border-red-100 bg-red-50 flex items-center justify-between">
+                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-red-200 dark:border-red-900/50 overflow-hidden">
+                    <div className="p-6 border-b border-red-100 dark:border-red-900/50 bg-red-50 dark:bg-red-900/10 flex items-center justify-between">
                         <div>
-                            <h2 className="text-lg font-semibold text-red-900 flex items-center">
-                                <AlertCircle className="w-5 h-5 mr-2 text-red-500" /> Action Required: Overdue Accounts
+                            <h2 className="text-lg font-semibold text-red-900 dark:text-red-400 flex items-center">
+                                <AlertCircle className="w-5 h-5 mr-2 text-red-500 dark:text-red-400" /> Action Required: Overdue Accounts
                             </h2>
-                            <p className="text-red-700 text-sm mt-1">Students listed here have unpaid balances.</p>
+                            <p className="text-red-700 dark:text-red-300 text-sm mt-1">Students listed here have unpaid balances.</p>
                         </div>
-                        <button className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors">
+                        <button className="px-4 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors">
                             Send Bulk Reminders
                         </button>
                     </div>
@@ -477,13 +477,13 @@ const FeeManagement = () => {
             {activeTab === 'reports' && reports && (
                 <div className="space-y-6">
                     <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-bold text-slate-800">Financial Overview</h2>
+                        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Financial Overview</h2>
                         <div className="flex gap-2">
-                            <button onClick={handleExportPDF} className="flex items-center px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition-colors shadow-sm">
-                                <FileText className="w-4 h-4 mr-2 text-red-500" /> Export PDF
+                            <button onClick={handleExportPDF} className="flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                                <FileText className="w-4 h-4 mr-2 text-red-500 dark:text-red-400" /> Export PDF
                             </button>
-                            <button onClick={handleExportExcel} className="flex items-center px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition-colors shadow-sm">
-                                <FileSpreadsheet className="w-4 h-4 mr-2 text-emerald-500" /> Export Excel
+                            <button onClick={handleExportExcel} className="flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                                <FileSpreadsheet className="w-4 h-4 mr-2 text-emerald-500 dark:text-emerald-400" /> Export Excel
                             </button>
                         </div>
                     </div>
@@ -656,10 +656,10 @@ const FeeManagement = () => {
 
             {isPaymentModalOpen && selectedFee && (
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-blue-50">
-                            <h2 className="text-xl font-bold text-blue-900">Collect Payment</h2>
-                            <button onClick={() => setIsPaymentModalOpen(false)} className="text-blue-400 hover:text-blue-600">×</button>
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-blue-50 dark:bg-blue-900/30">
+                            <h2 className="text-xl font-bold text-blue-900 dark:text-blue-200">Collect Payment</h2>
+                            <button onClick={() => setIsPaymentModalOpen(false)} className="text-blue-400 hover:text-blue-600 dark:hover:text-blue-300">×</button>
                         </div>
                         <form onSubmit={handleCollectPayment} className="p-6">
                             <div className="mb-6 space-y-2 text-sm text-slate-600 bg-slate-50 rounded-lg p-4 border border-slate-100">
@@ -704,30 +704,30 @@ const FeeManagement = () => {
                         </div>
                         <div className="p-6 overflow-y-auto w-full">
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
                                     <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">Student</p>
-                                    <p className="font-bold text-slate-800">{selectedFee.first_name} {selectedFee.last_name}</p>
-                                    <p className="text-sm text-slate-500 mt-1">{selectedFee.student_code}</p>
+                                    <p className="font-bold text-slate-800 dark:text-slate-100">{selectedFee.first_name} {selectedFee.last_name}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{selectedFee.student_code}</p>
                                 </div>
-                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
                                     <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">Fee Plan</p>
-                                    <p className="font-bold text-slate-800">{selectedFee.class_name}</p>
-                                    <p className="text-sm text-slate-500 mt-1">{selectedFee.month}</p>
+                                    <p className="font-bold text-slate-800 dark:text-slate-100">{selectedFee.class_name}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{selectedFee.month}</p>
                                 </div>
-                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
                                     <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">Ledger Status</p>
                                     <span className={`inline-flex px-2 py-1 text-xs font-bold rounded ${selectedFee.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' : selectedFee.status === 'PARTIALLY_PAID' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
                                         {selectedFee.status.replace('_', ' ')}
                                     </span>
                                 </div>
-                                <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                                    <p className="text-xs text-blue-500 font-medium uppercase tracking-wider mb-1">Balance Due</p>
-                                    <p className="font-bold text-blue-900 text-xl">₹{((selectedFee.amount - selectedFee.discount) - parseFloat(selectedFee.total_paid || 0)).toFixed(2)}</p>
+                                <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-xl border border-blue-100 dark:border-blue-800/50">
+                                    <p className="text-xs text-blue-500 dark:text-blue-400 font-medium uppercase tracking-wider mb-1">Balance Due</p>
+                                    <p className="font-bold text-blue-900 dark:text-blue-200 text-xl">₹{((selectedFee.amount - selectedFee.discount) - parseFloat(selectedFee.total_paid || 0)).toFixed(2)}</p>
                                 </div>
                             </div>
 
-                            <form onSubmit={handleUpdateFee} className="mb-8 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                                <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Modify Base Settings</h3>
+                            <form onSubmit={handleUpdateFee} className="mb-8 bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">Modify Base Settings</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-1">Base Amount (₹)</label>
@@ -745,13 +745,13 @@ const FeeManagement = () => {
                                 </div>
                             </form>
 
-                            <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">Payment History Archive</h3>
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">Payment History Archive</h3>
                             {paymentHistory.length === 0 ? (
-                                <div className="text-center py-8 text-slate-500 bg-slate-50 rounded-lg border border-slate-100">No payments have been recorded for this fee block yet.</div>
+                                <div className="text-center py-8 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700">No payments have been recorded for this fee block yet.</div>
                             ) : (
                                 <table className="w-full text-left text-sm">
                                     <thead>
-                                        <tr className="bg-slate-100 text-slate-500">
+                                        <tr className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                                             <th className="p-3 rounded-tl-lg font-medium">Transaction Date</th>
                                             <th className="p-3 font-medium">Payment Mode</th>
                                             <th className="p-3 text-right rounded-tr-lg font-medium">Amount Received</th>
@@ -812,27 +812,27 @@ const FeeManagement = () => {
 
             {isAdvancePaymentModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-emerald-50">
-                            <h2 className="text-xl font-bold text-emerald-900">Advance/Custom Payment</h2>
-                            <button onClick={() => setIsAdvancePaymentModalOpen(false)} className="text-emerald-400 hover:text-emerald-600"><X className="w-5 h-5" /></button>
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-emerald-50 dark:bg-emerald-900/10">
+                            <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-400">Advance/Custom Payment</h2>
+                            <button onClick={() => setIsAdvancePaymentModalOpen(false)} className="text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300"><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={handleAdvancePayment} className="p-6">
                             <div className="space-y-4 mb-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Select Student</label>
-                                    <select name="student_id" required className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:border-emerald-500">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Select Student</label>
+                                    <select name="student_id" required className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-200">
                                         <option value="">-- select a student --</option>
                                         {students.map(s => <option key={s.id} value={s.id}>{s.first_name} {s.last_name} ({s.student_code})</option>)}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Amount (₹)</label>
-                                    <input type="number" step="0.01" name="amount_paid" required className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 font-bold text-lg text-emerald-600" />
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Amount (₹)</label>
+                                    <input type="number" step="0.01" name="amount_paid" required className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:border-emerald-500 font-bold text-lg text-emerald-600 dark:text-emerald-400" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Payment Mode</label>
-                                    <select name="payment_mode" className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:border-emerald-500">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Payment Mode</label>
+                                    <select name="payment_mode" className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-200">
                                         <option value="CASH">Cash</option>
                                         <option value="UPI">UPI</option>
                                         <option value="BANK_TRANSFER">Bank Transfer</option>

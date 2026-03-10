@@ -15,6 +15,7 @@ import StudentManagement from './pages/admin/StudentManagement';
 import ClassManagement from './pages/admin/ClassManagement';
 import ClassDetails from './pages/admin/ClassDetails';
 import FeeManagement from './pages/admin/FeeManagement';
+import NoticeManagement from './pages/admin/NoticeManagement';
 
 // Moduler Placeholders
 const GenericPlaceholder = ({ title }) => (
@@ -73,7 +74,7 @@ function App() {
             <Route path="/admin/classes" element={<ProtectedRoute allowedRoles={['ADMIN']}><MainLayout><ClassManagement /></MainLayout></ProtectedRoute>} />
             <Route path="/admin/classes/:id" element={<ProtectedRoute allowedRoles={['ADMIN']}><MainLayout><ClassDetails /></MainLayout></ProtectedRoute>} />
             <Route path="/admin/fees" element={<ProtectedRoute allowedRoles={['ADMIN']}><MainLayout><FeeManagement /></MainLayout></ProtectedRoute>} />
-            <Route path="/admin/notices" element={<ProtectedRoute allowedRoles={['ADMIN']}><MainLayout><GenericPlaceholder title="Notice Dispatch" /></MainLayout></ProtectedRoute>} />
+            <Route path="/admin/notices" element={<ProtectedRoute allowedRoles={['ADMIN']}><MainLayout><NoticeManagement /></MainLayout></ProtectedRoute>} />
 
             {/* Protected Student Routes */}
             <Route path="/student" element={<ProtectedRoute allowedRoles={['STUDENT']}><MainLayout><StudentDashboard /></MainLayout></ProtectedRoute>} />

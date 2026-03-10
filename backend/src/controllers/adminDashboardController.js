@@ -128,9 +128,13 @@ const getDashboardMetrics = async (req, res) => {
         const classOverview = classOverviewResult.rows;
 
         // System Summary
+        const latestNoticeRes = await pool.query('SELECT title, created_at FROM notices ORDER BY is_pinned DESC, created_at DESC LIMIT 1');
+        const latestNotice = latestNoticeRes.rows.length > 0 ? latestNoticeRes.rows[0] : null;
+
         const systemSummary = {
             totalClasses,
-            totalNotices: parseInt((await pool.query('SELECT COUNT(*) as count FROM notices')).rows[0].count)
+            totalNotices: parseInt((await pool.query('SELECT COUNT(*) as count FROM notices')).rows[0].count),
+            latestNotice
         };
 
         res.json({
